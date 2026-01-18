@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRISTI // INFINITE</title>
+    <style>
+        body { margin: 0; background: #000; overflow-x: hidden; font-family: 'Inter', sans-serif; }
+        canvas { display: block; position: fixed; top: 0; left: 0; }
+        
+        #page-1, #page-2, #page-3 {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        #page-2, #page-3 { display: none; }
+
+        .interface {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .hero-text {
+            font-size: 15vw;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            color: white;
+            mix-blend-mode: difference;
+            opacity: 0.1;
+        }
+
+        .oval-btn {
+            padding: 18px 45px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            pointer-events: auto;
+            margin-top: 20px;
+        }
+
+        .oval-btn:hover {
+            background: white;
+            color: black;
+            box-shadow: 0 0 30px rgba(255,255,255,0.4);
+        }
+
+        /* PAGE 3: FULL SCREEN RANGOLI & 20 CARDS */
+        #page-3 {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 100px 20px;
+            z-index: 200;
+        }
+
+        #rangoli-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1400px;
+            margin-bottom: 100px;
+            z-index: 10;
+        }
+
+        .scratch-card {
+            height: 350px;
+            perspective: 1000px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .scratch-card.flipped .card-inner { transform: rotateY(180deg); }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .card-front {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            letter-spacing: 3px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .card-back {
+            background: #000;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+        }
+
+        .card-content {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9) 40%);
+            color: #fff;
+            text-align: center;
+        }
+
+        .caption-text {
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.4;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #wish-container { text-align: center; color: white; opacity: 0; padding: 0 20px;}
+
+        /* PAGE 4 STYLE */
+        #page-4 {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 300;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 50px;
+        }
+
+        #forge-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+        }
+
+        .emoji-dock {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .emoji-option {
+            font-size: 30px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .emoji-option:hover {
+            transform: scale(1.5) rotate(10deg);
+        }
+
+        /* PAGE 5 STYLE */
+        #page-5 {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1a0033 0%, #000 100%);
+            z-index: 400;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .birthday-msg {
+            font-size: 2.5rem;
+            max-width: 800px;
+            line-height: 1.6;
+            font-weight: 200;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        .highlight-name {
+            font-weight: 800;
+            color: #ff3366;
+            text-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+        }
+
+        .floating-hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="page-1">
+        <div id="gl-container"></div>
+        <div class="interface">
+            <h1 class="hero-text" id="name">SRISTI</h1>
+            <button class="oval-btn" onclick="goToPage2()">Open My Heart</button>
+        </div>
+    </div>
+
+    <div id="page-2">
+        <div class="interface">
+            <div id="wish-container">
+                <h1 style="font-weight:100; font-size: 8vw; letter-spacing: 15px;">SRISTI</h1>
+                <p style="color:rgba(255,255,255,0.8); max-width: 600px; font-size: 1.2rem;">
+                    "In the map of my life, the brightest spots are the ones where you were standing by my side. You aren't just a best friend; you are the sister I chose."
+                </p>
+                <button class="oval-btn" onclick="goToPage3()">View Our Memories</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-3">
+        <canvas id="rangoli-canvas"></canvas>
+        <h2 style="color:white; letter-spacing:15px; font-weight:100; margin-bottom: 50px; z-index: 10;">20 CHAPTERS OF US</h2>
+        <div class="cards-grid" id="cards-grid"></div>
+        <button class="oval-btn" style="position: relative; margin-bottom: 50px;">Get Love</button>
+    </div>
+
+    <div id="page-4">
+        <canvas id="forge-canvas"></canvas>
+        <div class="emoji-dock">
+            <div class="emoji-option" onclick="forgeShape('heart')">❤️</div>
+            <div class="emoji-option" onclick="forgeShape('smile')">😊</div>
+            <div class="emoji-option" onclick="forgeShape('tree')">🌳</div>
+            <div class="emoji-option" onclick="forgeShape('star')">✨</div>
+            <div class="emoji-option" onclick="forgeShape('infinity')">♾️</div>
+        </div>
+        <button class="oval-btn" style="z-index: 10; margin-bottom: 20px;" onclick="goToPage5()">Final Wish</button>
+    </div>
+
+    <div id="page-5">
+        <div class="floating-hearts" id="hearts-bg"></div>
+        <div class="birthday-msg" id="typewriter-text"></div>
+        <div id="sub-msg" style="opacity:0; font-style: italic; color: rgba(255,255,255,0.6); margin-bottom: 40px;">Forever Your Person.</div>
+        <button class="oval-btn" style="opacity:0; z-index:100;" id="back-home-btn" onclick="replayJourney()">View Again</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+
+    <script>
+        /** PAGE 1 & 2 LOGIC **/
+        let scene, camera, renderer, starSystem;
+        let mouseX = 0, mouseY = 0;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
+            camera.position.z = 400;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('gl-container').appendChild(renderer.domElement);
+            const geometry = new THREE.BufferGeometry();
+            const vertices = []; const colors = [];
+            for (let i = 0; i < 15000; i++) {
+                vertices.push(THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000));
+                const c = new THREE.Color();
+                if (Math.random() > 0.9) c.setHex(0xffffff); else if (Math.random() > 0.5) c.setHex(0x7000ff); else c.setHex(0x00d4ff);
+                colors.push(c.r, c.g, c.b);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            starSystem = new THREE.Points(geometry, new THREE.PointsMaterial({size: 2, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending}));
+            scene.add(starSystem);
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX - window.innerWidth / 2);
+                mouseY = (e.clientY - window.innerHeight / 2);
+                if(document.getElementById('name')) document.getElementById('name').style.opacity = Math.min(0.5, Math.max(0.1, 1 - (Math.abs(mouseX) / 500)));
+            });
+        }
+        function animateThree() {
+            if(document.getElementById('page-1').style.display === 'none') return;
+            requestAnimationFrame(animateThree);
+            starSystem.rotation.x += 0.0005; starSystem.rotation.y += 0.001;
+            starSystem.position.x += (mouseX * 0.2 - starSystem.position.x) * 0.05;
+            starSystem.position.y += (-mouseY * 0.2 - starSystem.position.y) * 0.05;
+            renderer.render(scene, camera);
+        }
+
+        let particles = [];
+        function setup() {
+            let cnv = createCanvas(windowWidth, windowHeight);
+            cnv.parent('page-2');
+            for (let i = 0; i < 800; i++) particles.push(new FlowParticle());
+            background(0); noLoop();
+        }
+        function draw() {
+            background(0, 20);
+            for (let p of particles) { p.move(); p.display(); p.checkEdge(); }
+        }
+        class FlowParticle {
+            constructor() {
+                this.pos = createVector(random(width), random(height));
+                this.vel = createVector(0,0); this.acc = createVector(0,0);
+                this.maxSpeed = random(1,2); this.h = random(180,260);
+            }
+            move() {
+                let n = noise(this.pos.x * 0.01, this.pos.y * 0.01, frameCount * 0.002);
+                this.acc.set(cos(TWO_PI * n), sin(TWO_PI * n));
+                this.vel.add(this.acc); this.vel.limit(this.maxSpeed);
+                this.pos.add(this.vel); this.acc.mult(0);
+            }
+            display() { stroke(this.h, 100, 255, 150); strokeWeight(1.5); point(this.pos.x, this.pos.y); }
+            checkEdge() { if (this.pos.x < 0) this.pos.x = width; if (this.pos.x > width) this.pos.x = 0; if (this.pos.y < 0) this.pos.y = height; if (this.pos.y > height) this.pos.y = 0; }
+        }
+
+        /** PAGE 3: FULL SCREEN RANGOLI **/
+        const rangoliCanvas = document.getElementById('rangoli-canvas');
+        const ctx = rangoliCanvas.getContext('2d');
+        let rAngle = 0;
+
+        function drawRangoli() {
+            if(document.getElementById('page-3').style.display !== 'flex') return;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, rangoliCanvas.width, rangoliCanvas.height);
+            let centerX = rangoliCanvas.width / 2 + (mouseX * 0.8);
+            let centerY = rangoliCanvas.height / 2 + (mouseY * 0.8);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            rAngle += 0.01;
+            ctx.rotate(rAngle);
+            for (let i = 0; i < 12; i++) {
+                ctx.rotate(Math.PI / 6);
+                ctx.strokeStyle = `hsl(${(rAngle * 40 + i*20) % 360}, 80%, 50%)`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(150, 0, 60, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(50, 50, 150, -50, 250, 0);
+                ctx.stroke();
+            }
+            ctx.restore();
+            requestAnimationFrame(drawRangoli);
+        }
+
+        function goToPage2() {
+            gsap.to("#page-1", { opacity: 0, duration: 1, onComplete: () => {
+                document.getElementById('page-1').style.display = 'none';
+                document.getElementById('page-2').style.display = 'block';
+                loop();
+                gsap.to("#wish-container", { opacity: 1, duration: 2, y: -20 });
+            }});
+        }
+
+        function goToPage3() {
+            noLoop();
+            document.getElementById('page-2').style.display = 'none';
+            document.getElementById('page-3').style.display = 'flex';
+            rangoliCanvas.width = window.innerWidth;
+            rangoliCanvas.height = window.innerHeight;
+            drawRangoli();
+            initCards();
+        }
+
+        const memories = [
+            { img: "1.jpg", text: "You're the sister I got to choose for myself.", color: "linear-gradient(45deg, #ff0070, #ff7000)" },
+            { img: "2.jpg", text: "A best friend like you is a once-in-a-lifetime blessing.", color: "linear-gradient(45deg, #7000ff, #00d4ff)" },
+            { img: "3.jpg", text: "Thank you for being my anchor in every storm.", color: "linear-gradient(45deg, #00ff87, #60efff)" },
+            { img: "4.jpg", text: "We don't need words; our silence speaks volumes.", color: "linear-gradient(45deg, #f093fb, #f5576c)" },
+            { img: "5.jpg", text: "To the one who knows my heart better than I do.", color: "linear-gradient(45deg, #4facfe, #00f2fe)" },
+            { img: "6.jpg", text: "Distance means nothing when a soul is this close.", color: "linear-gradient(45deg, #fa709a, #fee140)" },
+            { img: "7.jpg", text: "Every laugh with you adds a year to my life.", color: "linear-gradient(45deg, #ff5858, #f09819)" },
+            { img: "8.jpg", text: "You are the 'home' in my chaotic world.", color: "linear-gradient(45deg, #13f1fc, #0470dc)" },
+            { img: "9.jpg", text: "God sent me a guardian angel, I call her Sristi.", color: "linear-gradient(45deg, #ee9ca7, #ffdde1)" },
+            { img: "10.jpg", text: "I'd pick you as my bestie in every single universe.", color: "linear-gradient(45deg, #89f7fe, #66a6ff)" },
+            { img: "11.jpg", text: "Through thick and thin, it’s always been us.", color: "linear-gradient(45deg, #fdfcfb, #e2d1c3)" },
+            { img: "12.jpg", text: "You make the world feel a little less lonely.", color: "linear-gradient(45deg, #abecd6, #fbedad)" },
+            { img: "13.jpg", text: "My partner in crime and keeper of my secrets.", color: "linear-gradient(45deg, #ddd6f3, #faaca8)" },
+            { img: "14.jpg", text: "A piece of my heart lives within you.", color: "linear-gradient(45deg, #96fbc4, #f9f586)" },
+            { img: "15.jpg", text: "Thank you for never letting me walk alone.", color: "linear-gradient(45deg, #f093fb, #f5576c)" },
+            { img: "16.jpg", text: "Our friendship is the most beautiful story I have.", color: "linear-gradient(45deg, #00cdac, #8ddad5)" },
+            { img: "17.jpg", text: "To the person who hears my soul when I'm silent.", color: "linear-gradient(45deg, #ff0844, #ffb199)" },
+            { img: "18.jpg", text: "Side by side or miles apart, we're connected by heart.", color: "linear-gradient(45deg, #6a11cb, #2575fc)" },
+            { img: "19.jpg", text: "You're my unbiological sister, forever and always.", color: "linear-gradient(45deg, #0ba360, #3cba92)" },
+            { img: "20.jpg", text: "Every memory with you is a treasure I'll keep forever.", color: "linear-gradient(45deg, #f83600, #f9d423)" }
+        ];
+
+        function initCards() {
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = ''; 
+            memories.forEach((m, i) => {
+                const card = document.createElement('div');
+                card.className = 'scratch-card';
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front" style="background: ${m.color}">CHAPTER ${i+1}</div>
+                        <div class="card-back">
+                            <div class="card-image" style="background-image: url('${m.img}')"></div>
+                            <div class="card-content">
+                                <span class="caption-text">${m.text}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                card.onclick = function() { this.classList.toggle('flipped'); };
+                grid.appendChild(card);
+                gsap.to(card, { opacity: 1, y: 0, duration: 0.8, delay: i * 0.1, ease: "power2.out" });
+            });
+        }
+
+        /** PAGE 4 LOGIC **/
+        document.querySelector('#page-3 .oval-btn').onclick = goToPage4;
+
+        function goToPage4() {
+            document.getElementById('page-3').style.display = 'none';
+            document.getElementById('page-4').style.display = 'flex';
+            if (forgeParticles.length === 0) initForge();
+            animateForge();
+        }
+
+        let forgeParticles = [];
+        let targetPoints = [];
+
+        function initForge() {
+            const canvas = document.getElementById('forge-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            for (let i = 0; i < 1500; i++) {
+                forgeParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    tx: Math.random() * canvas.width,
+                    ty: Math.random() * canvas.height,
+                    vx: 0, vy: 0,
+                    color: 'white'
+                });
+            }
+        }
+
+        function forgeShape(type) {
+            targetPoints = [];
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2 - 100;
+            let color = '#ff0070';
+            if (type === 'heart') {
+                color = '#ff3366';
+                for (let t = 0; t < Math.PI * 2; t += 0.01) {
+                    let x = 16 * Math.pow(Math.sin(t), 3);
+                    let y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                    targetPoints.push({x: centerX + x * 15, y: centerY + y * 15});
+                }
+            } else if (type === 'smile') {
+                color = '#ffcc00';
+                for (let t = 0; t < Math.PI * 2; t += 0.1) {
+                    targetPoints.push({x: centerX + 150 * Math.cos(t), y: centerY + 150 * Math.sin(t)});
+                }
+                for (let t = 0.5; t < Math.PI - 0.5; t += 0.1) {
+                    targetPoints.push({x: centerX + 80 * Math.cos(t), y: centerY + 30 + 80 * Math.sin(t)});
+                }
+            } else if (type === 'tree') {
+                color = '#00ff87';
+                for(let i=0; i<300; i++) targetPoints.push({x: centerX + (Math.random()*100-50), y: centerY + (Math.random()*200)});
+                for(let i=0; i<700; i++) targetPoints.push({x: centerX + (Math.random()*300-150), y: centerY + (Math.random()*200-150)});
+            } else {
+                color = '#00d4ff';
+                for(let i=0; i<1000; i++) targetPoints.push({x: centerX + (Math.random()*400-200), y: centerY + (Math.random()*400-200)});
+            }
+            forgeParticles.forEach((p, i) => {
+                const target = targetPoints[i % targetPoints.length];
+                p.tx = target.x; p.ty = target.y; p.color = color;
+            });
+        }
+
+        function animateForge() {
+            const canvas = document.getElementById('forge-canvas');
+            const fctx = canvas.getContext('2d');
+            if (document.getElementById('page-4').style.display !== 'flex') return;
+            fctx.fillStyle = 'rgba(0,0,0,0.15)';
+            fctx.fillRect(0, 0, canvas.width, canvas.height);
+            let bX = mouseX + (window.innerWidth/2);
+            let bY = mouseY + (window.innerHeight/2);
+            let wingSpan = Math.sin(Date.now() * 0.01) * 30;
+            fctx.strokeStyle = 'cyan';
+            fctx.lineWidth = 2;
+            fctx.beginPath(); fctx.moveTo(bX, bY); fctx.lineTo(bX - 40 - wingSpan, bY - 40); fctx.lineTo(bX - 10, bY + 20); fctx.closePath(); fctx.stroke();
+            fctx.beginPath(); fctx.moveTo(bX, bY); fctx.lineTo(bX + 40 + wingSpan, bY - 40); fctx.lineTo(bX + 10, bY + 20); fctx.closePath(); fctx.stroke();
+            forgeParticles.forEach(p => {
+                p.x += (p.tx - p.x) * 0.05; p.y += (p.ty - p.y) * 0.05;
+                fctx.fillStyle = p.color; fctx.fillRect(p.x, p.y, 2, 2);
+            });
+            requestAnimationFrame(animateForge);
+        }
+
+        /** PAGE 5: FINAL BIRTHDAY WISH **/
+        function goToPage5() {
+            document.getElementById('page-4').style.display = 'none';
+            document.getElementById('page-5').style.display = 'flex';
+            startFinalAnimation();
+        }
+
+        let heartInterval;
+        function startFinalAnimation() {
+            const text = "Happy Birthday, <span class='highlight-name'>Sristi</span>. If I could give you one thing in life, I would give you the ability to see yourself through my eyes. Only then would you realize that you aren't just a part of my world... you are the very light that keeps it from going dark.";
+            const container = document.getElementById('typewriter-text');
+            container.innerHTML = "";
+            let i = 0;
+            
+            // Clear previous hearts if any
+            document.getElementById('hearts-bg').innerHTML = "";
+            if (heartInterval) clearInterval(heartInterval);
+
+            // Floating Hearts Effect
+            heartInterval = setInterval(() => {
+                if(document.getElementById('page-5').style.display !== 'flex') return;
+                const heart = document.createElement('div');
+                heart.innerHTML = '❤️';
+                heart.style.position = 'absolute';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.bottom = '-20px';
+                heart.style.fontSize = Math.random() * 20 + 10 + 'px';
+                heart.style.opacity = '0.5';
+                document.getElementById('hearts-bg').appendChild(heart);
+                gsap.to(heart, { y: -window.innerHeight, x: (Math.random()-0.5)*200, duration: 4 + Math.random()*2, onComplete: () => heart.remove() });
+            }, 300);
+
+            // Typewriter logic
+            function type() {
+                if (document.getElementById('page-5').style.display !== 'flex') return;
+                if (i < text.length) {
+                    if (text.charAt(i) === '<') {
+                        let end = text.indexOf('>', i);
+                        container.innerHTML += text.substring(i, end + 1);
+                        i = end + 1;
+                    } else {
+                        container.innerHTML += text.charAt(i);
+                        i++;
+                    }
+                    setTimeout(type, 50);
+                } else {
+                    gsap.to("#sub-msg", { opacity: 1, y: -10, duration: 2, delay: 0.5 });
+                    gsap.to("#back-home-btn", { opacity: 1, duration: 1, delay: 1.5 });
+                }
+            }
+            type();
+        }
+
+        function replayJourney() {
+            // Reset state
+            document.getElementById('page-5').style.display = 'none';
+            document.getElementById('typewriter-text').innerHTML = "";
+            document.getElementById('sub-msg').style.opacity = 0;
+            document.getElementById('back-home-btn').style.opacity = 0;
+            if (heartInterval) clearInterval(heartInterval);
+            
+            // Show Page 1
+            document.getElementById('page-1').style.display = 'block';
+            document.getElementById('page-1').style.opacity = 1;
+            animateThree();
+        }
+
+        initThree();
+        animateThree();
+    </script>
+</body>
+</html>
